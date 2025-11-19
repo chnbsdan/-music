@@ -70,8 +70,8 @@
 智能API系统
 ```
 const API_BASES = [
-    'https://musicapi.hangdn.com',
-    'https://wy.1356666.xyz',
+    'https://api.hangdn.com',
+    'https://wyapi.1356666.xyz',
     'https://music-api.heheda.top',
     'https://api.injahow.cn/meting',
     'https://music.163api.xyz',
