@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>hangdn music搜索官网 - AI超强版</title>
+    <title>音乐播放器</title>
     <link rel="icon" href="https://pan.hangdn.com/raw/ico/map64.ico" type="image/ico">
     <style>
         * {
@@ -17,33 +17,19 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #333;
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
-            padding-bottom: 20px; /* 移除底部padding，因为进度条已移到卡片内 */
-        }
-        
-        .title-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .title {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 15px;
-            display: inline-block;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            font-size: 22px;
-            font-weight: bold;
-            letter-spacing: 1px;
         }
         
         .main-container {
             max-width: 1400px;
-            margin: 0 auto;
+            width: 100%;
             display: grid;
             grid-template-columns: 1fr 350px;
             gap: 20px;
+            margin-top: 40px; /* 向下移动 */
         }
         
         .content-area {
@@ -816,10 +802,6 @@
     </style>
 </head>
 <body>
-    <div class="title-container">
-        <div class="title">hangdn music搜索 - AI超强版</div>
-    </div>
-
     <div class="main-container">
         <div class="content-area">
             <div class="btn-bar">
@@ -987,7 +969,7 @@
     <script>
         // AI超强修复版音乐播放器 - 终极解决方案
         const API_BASES = [
-            'https://wy.1356666.xyz',  // 新增您的自定义接口
+            'https://musicapi.hangdn.com',  // 新增您的自定义接口
             'https://music-api.heheda.top',
             'https://api.injahow.cn/meting',
             'https://music.163api.xyz',
@@ -1029,6 +1011,7 @@
         // 右键菜单相关变量
         let contextMenu = null;
         let contextMenuTarget = null;
+        let contextMenuSong = null;
 
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -1089,9 +1072,12 @@
                 // 检查是否在音乐列表项上右键
                 if (e.target.closest('.music-item')) {
                     contextMenuTarget = e.target.closest('.music-item');
+                    const index = Array.from(contextMenuTarget.parentNode.children).indexOf(contextMenuTarget);
+                    contextMenuSong = currentState.searchResults[index];
                     showContextMenu(e);
                 } else if (e.target.closest('.player-content')) {
                     contextMenuTarget = 'player';
+                    contextMenuSong = currentState.currentSong;
                     showContextMenu(e);
                 } else {
                     hideContextMenu();
@@ -1122,48 +1108,39 @@
         function contextMenuAction(action) {
             hideContextMenu();
             
+            if (!contextMenuSong) {
+                showMessage('未选择歌曲');
+                return;
+            }
+            
             switch(action) {
                 case 'play':
-                    if (contextMenuTarget && contextMenuTarget.classList.contains('music-item')) {
-                        const index = Array.from(contextMenuTarget.parentNode.children).indexOf(contextMenuTarget);
-                        const songId = currentState.searchResults[index].id;
-                        playSong(songId, index);
+                    const songIndex = currentState.searchResults.findIndex(song => song.id === contextMenuSong.id);
+                    if (songIndex !== -1) {
+                        playSong(contextMenuSong.id, songIndex);
+                    } else {
+                        showMessage('无法播放此歌曲');
                     }
                     break;
                 case 'addToPlaylist':
                     showMessage('已添加到播放列表');
                     break;
                 case 'addToFavorites':
-                    if (contextMenuTarget && contextMenuTarget.classList.contains('music-item')) {
-                        const index = Array.from(contextMenuTarget.parentNode.children).indexOf(contextMenuTarget);
-                        const song = currentState.searchResults[index];
-                        const songName = song.name || song.title;
-                        const artist = song.artists ? 
-                            (Array.isArray(song.artists) ? song.artists[0].name : song.artists) : '未知歌手';
-                        toggleFavorite(song.id, songName, artist);
-                    }
+                    const songName = contextMenuSong.name || contextMenuSong.title;
+                    const artist = contextMenuSong.artists ? 
+                        (Array.isArray(contextMenuSong.artists) ? contextMenuSong.artists[0].name : contextMenuSong.artists) : '未知歌手';
+                    toggleFavorite(contextMenuSong.id, songName, artist);
                     break;
                 case 'download':
-                    if (contextMenuTarget && contextMenuTarget.classList.contains('music-item')) {
-                        const index = Array.from(contextMenuTarget.parentNode.children).indexOf(contextMenuTarget);
-                        const song = currentState.searchResults[index];
-                        const songName = song.name || song.title;
-                        downloadSong(song.id, songName);
-                    } else if (contextMenuTarget === 'player' && currentState.currentSong) {
-                        const songName = currentState.currentSong.name || currentState.currentSong.title;
-                        downloadSong(currentState.currentSong.id, songName);
-                    }
+                    const songNameForDownload = contextMenuSong.name || contextMenuSong.title;
+                    downloadSong(contextMenuSong.id, songNameForDownload);
                     break;
                 case 'copyInfo':
                     let songInfo = '';
-                    if (contextMenuTarget && contextMenuTarget.classList.contains('music-item')) {
-                        const index = Array.from(contextMenuTarget.parentNode.children).indexOf(contextMenuTarget);
-                        const song = currentState.searchResults[index];
-                        songInfo = `${song.name || song.title} - ${song.artists ? (Array.isArray(song.artists) ? song.artists[0].name : song.artists) : '未知歌手'}`;
-                    } else if (contextMenuTarget === 'player' && currentState.currentSong) {
-                        const song = currentState.currentSong;
-                        songInfo = `${song.name || song.title} - ${song.artists ? (Array.isArray(song.artists) ? song.artists[0].name : song.artists) : '未知歌手'}`;
-                    }
+                    const songNameForCopy = contextMenuSong.name || contextMenuSong.title;
+                    const artistForCopy = contextMenuSong.artists ? 
+                        (Array.isArray(contextMenuSong.artists) ? contextMenuSong.artists[0].name : contextMenuSong.artists) : '未知歌手';
+                    songInfo = `${songNameForCopy} - ${artistForCopy}`;
                     
                     if (songInfo) {
                         navigator.clipboard.writeText(songInfo).then(() => {
