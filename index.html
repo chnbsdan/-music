@@ -970,6 +970,8 @@
         // AI超强修复版音乐播放器 - 终极解决方案
         const API_BASES = [
             'https://musicapi.hangdn.com',  // 新增您的自定义接口
+            'https://music.gdstudio.org',
+            'https://wy.1356666.xyz', 
             'https://music-api.heheda.top',
             'https://api.injahow.cn/meting',
             'https://music.163api.xyz',
@@ -1065,7 +1067,7 @@
         function initContextMenu() {
             contextMenu = document.getElementById('contextMenu');
             
-            // 绑定右键菜单事件
+            // 绑定右键菜单事件 - 全屏有效
             document.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 
@@ -1074,14 +1076,16 @@
                     contextMenuTarget = e.target.closest('.music-item');
                     const index = Array.from(contextMenuTarget.parentNode.children).indexOf(contextMenuTarget);
                     contextMenuSong = currentState.searchResults[index];
-                    showContextMenu(e);
                 } else if (e.target.closest('.player-content')) {
                     contextMenuTarget = 'player';
                     contextMenuSong = currentState.currentSong;
-                    showContextMenu(e);
                 } else {
-                    hideContextMenu();
+                    // 全屏右键菜单
+                    contextMenuTarget = 'global';
+                    contextMenuSong = null;
                 }
+                
+                showContextMenu(e);
             });
             
             // 点击其他地方隐藏右键菜单
@@ -1108,44 +1112,55 @@
         function contextMenuAction(action) {
             hideContextMenu();
             
-            if (!contextMenuSong) {
-                showMessage('未选择歌曲');
-                return;
-            }
-            
             switch(action) {
                 case 'play':
-                    const songIndex = currentState.searchResults.findIndex(song => song.id === contextMenuSong.id);
-                    if (songIndex !== -1) {
-                        playSong(contextMenuSong.id, songIndex);
+                    if (contextMenuSong) {
+                        const songIndex = currentState.searchResults.findIndex(song => song.id === contextMenuSong.id);
+                        if (songIndex !== -1) {
+                            playSong(contextMenuSong.id, songIndex);
+                        } else {
+                            showMessage('无法播放此歌曲');
+                        }
                     } else {
-                        showMessage('无法播放此歌曲');
+                        showMessage('请先选择歌曲');
                     }
                     break;
                 case 'addToPlaylist':
                     showMessage('已添加到播放列表');
                     break;
                 case 'addToFavorites':
-                    const songName = contextMenuSong.name || contextMenuSong.title;
-                    const artist = contextMenuSong.artists ? 
-                        (Array.isArray(contextMenuSong.artists) ? contextMenuSong.artists[0].name : contextMenuSong.artists) : '未知歌手';
-                    toggleFavorite(contextMenuSong.id, songName, artist);
+                    if (contextMenuSong) {
+                        const songName = contextMenuSong.name || contextMenuSong.title;
+                        const artist = contextMenuSong.artists ? 
+                            (Array.isArray(contextMenuSong.artists) ? contextMenuSong.artists[0].name : contextMenuSong.artists) : '未知歌手';
+                        toggleFavorite(contextMenuSong.id, songName, artist);
+                    } else {
+                        showMessage('请先选择歌曲');
+                    }
                     break;
                 case 'download':
-                    const songNameForDownload = contextMenuSong.name || contextMenuSong.title;
-                    downloadSong(contextMenuSong.id, songNameForDownload);
+                    if (contextMenuSong) {
+                        const songNameForDownload = contextMenuSong.name || contextMenuSong.title;
+                        downloadSong(contextMenuSong.id, songNameForDownload);
+                    } else {
+                        showMessage('请先选择歌曲');
+                    }
                     break;
                 case 'copyInfo':
-                    let songInfo = '';
-                    const songNameForCopy = contextMenuSong.name || contextMenuSong.title;
-                    const artistForCopy = contextMenuSong.artists ? 
-                        (Array.isArray(contextMenuSong.artists) ? contextMenuSong.artists[0].name : contextMenuSong.artists) : '未知歌手';
-                    songInfo = `${songNameForCopy} - ${artistForCopy}`;
-                    
-                    if (songInfo) {
-                        navigator.clipboard.writeText(songInfo).then(() => {
-                            showMessage('歌曲信息已复制到剪贴板');
-                        });
+                    if (contextMenuSong) {
+                        let songInfo = '';
+                        const songNameForCopy = contextMenuSong.name || contextMenuSong.title;
+                        const artistForCopy = contextMenuSong.artists ? 
+                            (Array.isArray(contextMenuSong.artists) ? contextMenuSong.artists[0].name : contextMenuSong.artists) : '未知歌手';
+                        songInfo = `${songNameForCopy} - ${artistForCopy}`;
+                        
+                        if (songInfo) {
+                            navigator.clipboard.writeText(songInfo).then(() => {
+                                showMessage('歌曲信息已复制到剪贴板');
+                            });
+                        }
+                    } else {
+                        showMessage('请先选择歌曲');
                     }
                     break;
                 case 'share':
